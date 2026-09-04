@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
+
 import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -36,7 +38,7 @@ LazyDatabase _openConnection() {
     if (Platform.isAndroid) {
       await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
     }
-    
+
     // final cachebase = (await getTemporaryDirectory()).path;
     // sqlite3.tempDirectory = cachebase;
 

@@ -9,14 +9,14 @@ import 'core/storage/preferences_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase (Requires flutterfire configure)
   try {
     await Firebase.initializeApp();
   } catch (e) {
     debugPrint('Firebase initialization failed (maybe missing config?): $e');
   }
-  
+
   final sharedPreferences = await SharedPreferences.getInstance();
 
   runApp(

@@ -8,19 +8,23 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const Scaffold(body: Center(child: Text('Login'))),
+        builder: (context, state) =>
+            const Scaffold(body: Center(child: Text('Login'))),
       ),
       GoRoute(
         path: '/register',
-        builder: (context, state) => const Scaffold(body: Center(child: Text('Register'))),
+        builder: (context, state) =>
+            const Scaffold(body: Center(child: Text('Register'))),
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const Scaffold(body: Center(child: Text('Home'))),
+        builder: (context, state) =>
+            const Scaffold(body: Center(child: Text('Home'))),
       ),
       GoRoute(
         path: '/projects',
-        builder: (context, state) => const Scaffold(body: Center(child: Text('Projects'))),
+        builder: (context, state) =>
+            const Scaffold(body: Center(child: Text('Projects'))),
       ),
       // TODO: Add routes for tasks, notes, documents, journal, goals, calendar, analytics, settings, profile
     ],
