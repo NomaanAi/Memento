@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "634936246548",
+    "project_id": "memento-2927a",
+    "storage_bucket": "memento-2927a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:634936246548:android:02c393dc8081ef91504201",
+        "android_client_info": {
+          "package_name": "com.memento.memento"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCu9N63zI6w3G6VBPq6oGc2WHvCB_3Jf4c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
