@@ -8,10 +8,21 @@ import 'package:memento/features/auth/presentation/screens/signup_screen.dart';
 import 'package:memento/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:memento/features/auth/presentation/screens/email_verification_screen.dart';
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+  RouterNotifier(this._ref) {
+    _ref.listen<AuthState>(
+      authStateProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final notifier = RouterNotifier(ref);
 
   return GoRouter(
+    refreshListenable: notifier,
     initialLocation: '/splash',
     routes: [
       GoRoute(
@@ -60,6 +71,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
       final isAuthRoute = state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/forgot-password';

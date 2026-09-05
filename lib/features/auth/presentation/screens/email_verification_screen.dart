@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memento/features/auth/presentation/providers/auth_provider.dart';
@@ -11,31 +12,83 @@ class EmailVerificationScreen extends ConsumerStatefulWidget {
   ConsumerState<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
 }
 
-class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScreen> {
+class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScreen> with WidgetsBindingObserver {
   bool _isLoading = false;
   bool _isSending = false;
+  int _cooldownSeconds = 0;
+  Timer? _cooldownTimer;
 
-  Future<void> _onCheckVerification() async {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cooldownTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Automatically refresh when returning to the app
+      _onCheckVerification(silent: true);
+    }
+  }
+
+  void _startCooldown() {
+    setState(() => _cooldownSeconds = 30);
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_cooldownSeconds > 0) {
+        setState(() => _cooldownSeconds--);
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  Future<void> _onCheckVerification({bool silent = false}) async {
+    if (_isLoading) return;
     setState(() => _isLoading = true);
+    
     await ref.read(authStateProvider.notifier).reloadUser();
-    setState(() => _isLoading = false);
+    
+    if (mounted) {
+      final authState = ref.read(authStateProvider);
+      if (!silent && authState == AuthState.emailVerificationRequired) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Your email is not verified yet. Please check your inbox and try again.')),
+        );
+      }
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _onResendEmail() async {
+    if (_cooldownSeconds > 0 || _isSending) return;
+    
     setState(() => _isSending = true);
     try {
       await ref.read(authRepositoryProvider).sendEmailVerification();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verification email sent!')),
+        const SnackBar(content: Text('Verification email sent! Check your inbox and spam folder.')),
       );
+      _startCooldown();
     } catch (e) {
       if (!mounted) return;
+      // Extract underlying error message if it's our AuthenticationException
+      final errorMessage = e.toString().contains('AuthenticationException') 
+          ? e.toString().replaceFirst('AuthenticationException: ', '')
+          : 'Failed to resend email. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to resend email. Please try again.')),
+        SnackBar(content: Text(errorMessage)),
       );
     } finally {
-      setState(() => _isSending = false);
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
@@ -81,19 +134,21 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                 const SizedBox(height: 32),
                 PrimaryAuthButton(
                   text: "I've verified my email",
-                  onPressed: _onCheckVerification,
+                  onPressed: () => _onCheckVerification(silent: false),
                   isLoading: _isLoading,
                 ),
                 const SizedBox(height: 16),
                 OutlinedButton(
-                  onPressed: _isSending ? null : _onResendEmail,
+                  onPressed: (_isSending || _cooldownSeconds > 0) ? null : _onResendEmail,
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: _isSending
                       ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Resend Verification Email'),
+                      : Text(_cooldownSeconds > 0 
+                          ? 'Resend available in ${_cooldownSeconds}s' 
+                          : 'Resend Verification Email'),
                 ),
               ],
             ),

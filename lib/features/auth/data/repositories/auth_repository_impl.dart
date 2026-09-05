@@ -31,13 +31,21 @@ class AuthRepositoryImpl implements AuthRepository {
     final user = _remoteDataSource.currentUser;
     if (user != null) {
       await _syncProfile(user.uid);
-      await sendEmailVerification();
     }
   }
 
   @override
   Future<void> signInWithGoogle() async {
     await _remoteDataSource.signInWithGoogle();
+    final user = _remoteDataSource.currentUser;
+    if (user != null) {
+      await _syncProfile(user.uid);
+    }
+  }
+
+  @override
+  Future<void> signInWithApple() async {
+    await _remoteDataSource.signInWithApple();
     final user = _remoteDataSource.currentUser;
     if (user != null) {
       await _syncProfile(user.uid);

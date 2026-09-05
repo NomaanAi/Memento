@@ -27,32 +27,40 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     super.dispose();
   }
 
-  void _onSignUp() {
+  Future<void> _onSignUp() async {
     if (_formKey.currentState!.validate()) {
-      ref.read(authStateProvider.notifier).signUpWithEmail(
-            _emailController.text.trim(),
-            _passwordController.text,
-            _nameController.text.trim(),
-          );
+      try {
+        await ref.read(authStateProvider.notifier).signUpWithEmail(
+              _emailController.text.trim(),
+              _passwordController.text,
+              _nameController.text.trim(),
+            );
+      } catch (e) {
+        if (!mounted) return;
+        final message = e.toString().replaceFirst('AuthenticationException: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
     }
   }
   
-  void _onGoogleSignIn() {
-    ref.read(authStateProvider.notifier).signInWithGoogle();
+  Future<void> _onGoogleSignIn() async {
+    try {
+      await ref.read(authStateProvider.notifier).signInWithGoogle();
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString().replaceFirst('AuthenticationException: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final isLoading = authState == AuthState.loading;
-
-    ref.listen<AuthState>(authStateProvider, (previous, next) {
-      if (next == AuthState.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration failed. Please try again.')),
-        );
-      }
-    });
 
     return Scaffold(
       appBar: AppBar(

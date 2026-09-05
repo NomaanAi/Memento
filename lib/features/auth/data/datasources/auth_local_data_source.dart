@@ -1,6 +1,6 @@
-import 'package:memento/core/database/app_database.dart';
+import 'package:memento/core/database/database_helper.dart';
 import 'package:memento/features/auth/domain/entities/user_profile.dart';
-import 'package:drift/drift.dart';
+import 'package:sqflite/sqflite.dart';
 
 abstract class AuthLocalDataSource {
   Future<void> saveUserProfile(UserProfile profile);
@@ -9,43 +9,55 @@ abstract class AuthLocalDataSource {
 }
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
-  final AppDatabase _db;
+  final DatabaseHelper _dbHelper;
 
-  AuthLocalDataSourceImpl(this._db);
+  AuthLocalDataSourceImpl(this._dbHelper);
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
-    await _db.into(_db.localUsers).insertOnConflictUpdate(
-      LocalUsersCompanion(
-        uid: Value(profile.uid),
-        displayName: Value(profile.displayName),
-        email: Value(profile.email),
-        photoUrl: Value(profile.photoUrl),
-        createdAt: Value(profile.createdAt),
-        updatedAt: Value(profile.updatedAt),
-        lastSyncedAt: Value(DateTime.now()),
-      )
+    final db = await _dbHelper.database;
+    await db.insert(
+      'local_users',
+      {
+        'uid': profile.uid,
+        'displayName': profile.displayName,
+        'email': profile.email,
+        'photoUrl': profile.photoUrl,
+        'createdAt': profile.createdAt.millisecondsSinceEpoch,
+        'updatedAt': profile.updatedAt.millisecondsSinceEpoch,
+        'lastSyncedAt': DateTime.now().millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   @override
   Future<UserProfile?> getUserProfile(String uid) async {
-    final result = await (_db.select(_db.localUsers)..where((t) => t.uid.equals(uid))).getSingleOrNull();
-    if (result == null) return null;
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'local_users',
+      where: 'uid = ?',
+      whereArgs: [uid],
+    );
+
+    if (maps.isEmpty) return null;
+
+    final result = maps.first;
     
     return UserProfile(
-      uid: result.uid,
-      displayName: result.displayName,
-      email: result.email,
-      photoUrl: result.photoUrl,
+      uid: result['uid'] as String,
+      displayName: result['displayName'] as String?,
+      email: result['email'] as String?,
+      photoUrl: result['photoUrl'] as String?,
       authProvider: 'unknown', // Not stored locally
-      createdAt: result.createdAt ?? DateTime.now(),
-      updatedAt: result.updatedAt ?? DateTime.now(),
+      createdAt: result['createdAt'] != null ? DateTime.fromMillisecondsSinceEpoch(result['createdAt'] as int) : DateTime.now(),
+      updatedAt: result['updatedAt'] != null ? DateTime.fromMillisecondsSinceEpoch(result['updatedAt'] as int) : DateTime.now(),
     );
   }
 
   @override
   Future<void> clearUserProfile() async {
-    await _db.delete(_db.localUsers).go();
+    final db = await _dbHelper.database;
+    await db.delete('local_users');
   }
 }

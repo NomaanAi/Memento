@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 import 'package:memento/features/auth/domain/entities/auth_user.dart';
 import 'package:memento/features/auth/domain/entities/user_profile.dart';
 import 'package:memento/features/auth/data/models/user_profile_model.dart';
+import 'package:memento/features/auth/utils/google_sign_in_helper.dart';
 import 'package:memento/core/errors/app_exceptions.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 abstract class AuthRemoteDataSource {
   Stream<AuthUser?> get authStateChanges;
@@ -12,6 +14,7 @@ abstract class AuthRemoteDataSource {
   Future<void> signInWithEmail({required String email, required String password});
   Future<void> signUpWithEmail({required String email, required String password, required String displayName});
   Future<void> signInWithGoogle();
+  Future<void> signInWithApple();
   Future<void> signOut();
   Future<void> sendPasswordResetEmail(String email);
   Future<void> sendEmailVerification();
@@ -21,10 +24,34 @@ abstract class AuthRemoteDataSource {
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _firebaseAuth;
-  final GoogleSignIn _googleSignIn;
   final FirebaseFirestore _firestore;
 
-  AuthRemoteDataSourceImpl(this._firebaseAuth, this._googleSignIn, this._firestore);
+  AuthRemoteDataSourceImpl(this._firebaseAuth, this._firestore);
+
+  String _mapFirebaseError(String code, String? defaultMessage) {
+    switch (code) {
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'user-not-found':
+      case 'user-disabled':
+        return 'No account was found for this email.';
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Incorrect email or password.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email.';
+      case 'weak-password':
+        return 'Your password is too weak.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait and try again.';
+      case 'network-request-failed':
+        return 'Network connection failed. Please check your internet connection.';
+      case 'operation-not-allowed':
+        return 'This sign-in method is not enabled.';
+      default:
+        return defaultMessage ?? 'Authentication failed. Please try again.';
+    }
+  }
 
   AuthUser? _mapFirebaseUser(User? user) {
     if (user == null) return null;
@@ -47,55 +74,72 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<void> signInWithEmail({required String email, required String password}) async {
     try {
+      debugPrint('AUTH: Login started');
       await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
+      debugPrint('AUTH: Login successful');
     } on FirebaseAuthException catch (e) {
-      throw AuthenticationException(e.message ?? 'Authentication failed', code: e.code);
+      throw AuthenticationException(_mapFirebaseError(e.code, e.message), code: e.code);
     } catch (e) {
-      throw AuthenticationException(e.toString());
+      throw AuthenticationException('An unexpected error occurred during sign in.');
     }
   }
 
   @override
   Future<void> signUpWithEmail({required String email, required String password, required String displayName}) async {
     try {
+      debugPrint('AUTH: Registration started');
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
       final user = credential.user;
       if (user != null) {
+        debugPrint('AUTH: Registration successful');
         await user.updateDisplayName(displayName);
-        final profile = UserProfile(
-          uid: user.uid,
-          displayName: displayName,
-          email: email,
-          photoUrl: null,
-          authProvider: 'password',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
-        await _firestore.collection('users').doc(user.uid).set(UserProfileModel.toJson(profile));
+        
+        debugPrint('AUTH: Verification email request started');
+        await user.sendEmailVerification();
+        debugPrint('AUTH: Verification email request successful');
+
+        try {
+          final profile = UserProfile(
+            uid: user.uid,
+            displayName: displayName,
+            email: email,
+            photoUrl: null,
+            authProvider: 'password',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          await _firestore.collection('users').doc(user.uid).set(UserProfileModel.toJson(profile));
+        } catch (dbError) {
+          debugPrint('Failed to save user profile to Firestore: $dbError');
+          // We don't fail the authentication flow if the profile save fails, 
+          // as the user is already created in Firebase Auth and verification email is sent.
+        }
       }
     } on FirebaseAuthException catch (e) {
-      throw AuthenticationException(e.message ?? 'Signup failed', code: e.code);
+      throw AuthenticationException(_mapFirebaseError(e.code, e.message), code: e.code);
     } catch (e) {
-      throw AuthenticationException(e.toString());
+      throw AuthenticationException('An unexpected error occurred during sign up.');
     }
   }
 
   @override
   Future<void> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return; // User canceled the sign-in
+      debugPrint('AUTH: Google sign-in started');
+      UserCredential userCredential;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
+      if (kIsWeb) {
+        userCredential = await _firebaseAuth.signInWithPopup(GoogleAuthProvider());
+      } else {
+        final credential = await signInWithGoogleMobile(_firebaseAuth);
+        if (credential == null) return;
+        userCredential = credential;
+      }
 
-      final userCredential = await _firebaseAuth.signInWithCredential(credential);
       final user = userCredential.user;
       
       if (user != null) {
+        debugPrint('AUTH: Google sign-in successful');
         final userDoc = await _firestore.collection('users').doc(user.uid).get();
         if (!userDoc.exists) {
            final profile = UserProfile(
@@ -111,16 +155,67 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         }
       }
     } on FirebaseAuthException catch (e) {
-      throw AuthenticationException(e.message ?? 'Google Sign-In failed', code: e.code);
+      throw AuthenticationException(_mapFirebaseError(e.code, e.message), code: e.code);
     } catch (e) {
-      throw AuthenticationException(e.toString());
+      throw AuthenticationException('An unexpected error occurred during Google Sign-In.');
+    }
+  }
+
+  @override
+  Future<void> signInWithApple() async {
+    try {
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      final OAuthProvider oAuthProvider = OAuthProvider('apple.com');
+      final AuthCredential credential = oAuthProvider.credential(
+        idToken: appleCredential.identityToken,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+      final user = userCredential.user;
+
+      if (user != null) {
+        final userDoc = await _firestore.collection('users').doc(user.uid).get();
+        if (!userDoc.exists) {
+          final displayName = appleCredential.givenName != null || appleCredential.familyName != null
+              ? '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'.trim()
+              : user.displayName;
+              
+          final profile = UserProfile(
+            uid: user.uid,
+            displayName: displayName,
+            email: user.email ?? appleCredential.email,
+            photoUrl: user.photoURL,
+            authProvider: 'apple.com',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          await _firestore.collection('users').doc(user.uid).set(UserProfileModel.toJson(profile));
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      throw AuthenticationException(_mapFirebaseError(e.code, e.message), code: e.code);
+    } catch (e) {
+      throw AuthenticationException('An unexpected error occurred during Apple Sign-In.');
     }
   }
 
   @override
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
-    await _googleSignIn.signOut();
+    try {
+      if (!kIsWeb) {
+        await signOutGoogleMobile();
+      }
+    } catch (_) {
+      // Ignore errors
+    }
   }
 
   @override
@@ -128,22 +223,27 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on FirebaseAuthException catch (e) {
-      throw AuthenticationException(e.message ?? 'Failed to send reset email', code: e.code);
+      throw AuthenticationException(_mapFirebaseError(e.code, e.message), code: e.code);
     }
   }
 
   @override
   Future<void> sendEmailVerification() async {
     try {
+      debugPrint('AUTH: Verification email request started');
       await _firebaseAuth.currentUser?.sendEmailVerification();
+      debugPrint('AUTH: Verification email request successful');
     } on FirebaseAuthException catch (e) {
-      throw AuthenticationException(e.message ?? 'Failed to send verification email', code: e.code);
+      debugPrint('AUTH: Verification email request failed: ${e.code}');
+      throw AuthenticationException(_mapFirebaseError(e.code, e.message), code: e.code);
     }
   }
 
   @override
   Future<void> reloadUser() async {
+    debugPrint('AUTH: User reload started');
     await _firebaseAuth.currentUser?.reload();
+    debugPrint('AUTH: Email verified = ${_firebaseAuth.currentUser?.emailVerified}');
   }
 
   @override
