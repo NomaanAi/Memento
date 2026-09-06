@@ -94,9 +94,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         debugPrint('AUTH: Registration successful');
         await user.updateDisplayName(displayName);
         
-        debugPrint('AUTH: Verification email request started');
-        await user.sendEmailVerification();
-        debugPrint('AUTH: Verification email request successful');
+        final currentUser = _firebaseAuth.currentUser;
+        if (currentUser == null) {
+          debugPrint('AUTH: Verification email failed: no current user');
+        } else {
+          debugPrint('AUTH: Verification email send started');
+          debugPrint('AUTH: Verification email target = ${currentUser.email}');
+          try {
+            await currentUser.sendEmailVerification();
+            debugPrint('AUTH: Verification email send succeeded');
+          } on FirebaseAuthException catch (e) {
+            debugPrint('AUTH: Verification email send failed');
+            debugPrint('AUTH: Firebase error code = ${e.code}');
+            debugPrint('AUTH: Firebase error message = ${e.message}');
+            rethrow;
+          } catch (e) {
+            debugPrint('AUTH: Verification email send failed');
+            debugPrint('AUTH: Error = $e');
+            rethrow;
+          }
+        }
 
         try {
           final profile = UserProfile(
@@ -229,13 +246,27 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> sendEmailVerification() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) {
+      debugPrint('AUTH: Verification email failed: no current user');
+      return;
+    }
+    
+    debugPrint('AUTH: Verification email send started');
+    debugPrint('AUTH: Verification email target = ${user.email}');
+    
     try {
-      debugPrint('AUTH: Verification email request started');
-      await _firebaseAuth.currentUser?.sendEmailVerification();
-      debugPrint('AUTH: Verification email request successful');
+      await user.sendEmailVerification();
+      debugPrint('AUTH: Verification email send succeeded');
     } on FirebaseAuthException catch (e) {
-      debugPrint('AUTH: Verification email request failed: ${e.code}');
+      debugPrint('AUTH: Verification email send failed');
+      debugPrint('AUTH: Firebase error code = ${e.code}');
+      debugPrint('AUTH: Firebase error message = ${e.message}');
       throw AuthenticationException(_mapFirebaseError(e.code, e.message), code: e.code);
+    } catch (e) {
+      debugPrint('AUTH: Verification email send failed');
+      debugPrint('AUTH: Error = $e');
+      throw AuthenticationException('An unexpected error occurred during email verification.');
     }
   }
 

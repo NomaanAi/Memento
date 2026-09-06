@@ -4,7 +4,7 @@ part 'task.freezed.dart';
 part 'task.g.dart';
 
 @freezed
-class AppTask with _$AppTask {
+abstract class AppTask with _$AppTask {
   const factory AppTask({
     required String id,
     String? projectId,

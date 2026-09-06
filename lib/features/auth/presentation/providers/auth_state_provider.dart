@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memento/features/auth/domain/repositories/auth_repository.dart';
 import 'package:memento/features/auth/presentation/providers/auth_provider.dart';
+import 'package:memento/features/auth/domain/entities/auth_user.dart';
 
 enum AuthState {
   initial,
@@ -13,6 +14,8 @@ enum AuthState {
 
 class AuthNotifier extends Notifier<AuthState> {
   late final AuthRepository _repository;
+  
+  AuthUser? get currentUser => _repository.currentUser;
 
   @override
   AuthState build() {

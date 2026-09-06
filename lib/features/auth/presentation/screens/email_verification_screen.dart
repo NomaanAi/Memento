@@ -54,14 +54,24 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
     if (_isLoading) return;
     setState(() => _isLoading = true);
     
+    debugPrint('AUTH: User reload started');
     await ref.read(authStateProvider.notifier).reloadUser();
     
     if (mounted) {
       final authState = ref.read(authStateProvider);
-      if (!silent && authState == AuthState.emailVerificationRequired) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Your email is not verified yet. Please check your inbox and try again.')),
-        );
+      final isVerified = authState == AuthState.authenticated;
+      
+      debugPrint('AUTH: Email verified = $isVerified');
+      
+      if (isVerified) {
+        debugPrint('AUTH: Email verification confirmed');
+      } else {
+        debugPrint('AUTH: Email verification still pending');
+        if (!silent) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Your email is not verified yet. Please check your inbox and try again.')),
+          );
+        }
       }
       setState(() => _isLoading = false);
     }
@@ -71,21 +81,23 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
     if (_cooldownSeconds > 0 || _isSending) return;
     
     setState(() => _isSending = true);
+    debugPrint('AUTH: Resend verification email started');
     try {
       await ref.read(authRepositoryProvider).sendEmailVerification();
+      debugPrint('AUTH: Resend verification email succeeded');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verification email sent! Check your inbox and spam folder.')),
+        const SnackBar(content: Text('Verification email sent. Check your inbox or spam folder.')),
       );
       _startCooldown();
     } catch (e) {
       if (!mounted) return;
-      // Extract underlying error message if it's our AuthenticationException
       final errorMessage = e.toString().contains('AuthenticationException') 
           ? e.toString().replaceFirst('AuthenticationException: ', '')
-          : 'Failed to resend email. Please try again.';
+          : e.toString();
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
+        SnackBar(content: Text('Unable to send verification email. $errorMessage')),
       );
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -126,10 +138,15 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'We have sent an email with a confirmation link to your email address. Please open it to verify your account.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                  textAlign: TextAlign.center,
+                Consumer(
+                  builder: (context, ref, child) {
+                    final user = ref.watch(authStateProvider.notifier).currentUser;
+                    return Text(
+                      'We sent a verification link to:\n\n${user?.email ?? 'your email'}\n\nCheck your inbox and spam folder.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    );
+                  },
                 ),
                 const SizedBox(height: 32),
                 PrimaryAuthButton(
