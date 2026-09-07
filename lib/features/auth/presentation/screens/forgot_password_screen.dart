@@ -35,8 +35,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         });
       } catch (e) {
         if (!mounted) return;
+        final errorMessage = e.toString().contains('AuthenticationException') 
+            ? e.toString().replaceFirst('AuthenticationException: ', '')
+            : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to send reset email. Please try again.')),
+          SnackBar(content: Text('Failed to send reset email. $errorMessage')),
         );
       } finally {
         setState(() {

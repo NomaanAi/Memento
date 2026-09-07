@@ -7,7 +7,11 @@ import 'package:memento/features/auth/presentation/screens/login_screen.dart';
 import 'package:memento/features/auth/presentation/screens/signup_screen.dart';
 import 'package:memento/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:memento/features/auth/presentation/screens/email_verification_screen.dart';
-
+import 'package:memento/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:memento/features/projects/presentation/screens/projects_screen.dart';
+import 'package:memento/features/tasks/presentation/screens/tasks_screen.dart';
+import 'package:memento/features/notes/presentation/screens/notes_screen.dart';
+import 'package:memento/features/search/presentation/screens/search_screen.dart';
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
   RouterNotifier(this._ref) {
@@ -47,27 +51,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Home'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.logout),
-                onPressed: () {
-                  ref.read(authStateProvider.notifier).signOut();
-                },
-              )
-            ],
-          ),
-          body: const Center(
-            child: Text('Welcome! Authentication successful.'),
-          ),
-        ),
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: '/projects',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Projects'))),
+        builder: (context, state) => const ProjectsScreen(),
+      ),
+      GoRoute(
+        path: '/tasks',
+        builder: (context, state) => const TasksScreen(),
+      ),
+      GoRoute(
+        path: '/notes',
+        builder: (context, state) => const NotesScreen(),
+      ),
+      GoRoute(
+        path: '/search',
+        builder: (context, state) => const SearchScreen(),
       ),
     ],
     redirect: (context, state) {
