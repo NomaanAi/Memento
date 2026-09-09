@@ -19,5 +19,6 @@ abstract class Project with _$Project {
     required String userId,
   }) = _Project;
 
-  factory Project.fromJson(Map<String, dynamic> json) => _$ProjectFromJson(json);
+  factory Project.fromJson(Map<String, dynamic> json) =>
+      _$ProjectFromJson(json);
 }

@@ -12,6 +12,9 @@ import 'package:memento/features/projects/presentation/screens/projects_screen.d
 import 'package:memento/features/tasks/presentation/screens/tasks_screen.dart';
 import 'package:memento/features/notes/presentation/screens/notes_screen.dart';
 import 'package:memento/features/search/presentation/screens/search_screen.dart';
+
+import '../layout/responsive_shell.dart';
+
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
   RouterNotifier(this._ref) {
@@ -33,10 +36,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
       ),
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const SignupScreen(),
@@ -49,30 +49,38 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/email-verification',
         builder: (context, state) => const EmailVerificationScreen(),
       ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const DashboardScreen(),
-      ),
-      GoRoute(
-        path: '/projects',
-        builder: (context, state) => const ProjectsScreen(),
-      ),
-      GoRoute(
-        path: '/tasks',
-        builder: (context, state) => const TasksScreen(),
-      ),
-      GoRoute(
-        path: '/notes',
-        builder: (context, state) => const NotesScreen(),
-      ),
-      GoRoute(
-        path: '/search',
-        builder: (context, state) => const SearchScreen(),
+      ShellRoute(
+        builder: (context, state, child) {
+          return ResponsiveShell(child: child);
+        },
+        routes: [
+          GoRoute(
+            path: '/home',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/projects',
+            builder: (context, state) => const ProjectsScreen(),
+          ),
+          GoRoute(
+            path: '/tasks',
+            builder: (context, state) => const TasksScreen(),
+          ),
+          GoRoute(
+            path: '/notes',
+            builder: (context, state) => const NotesScreen(),
+          ),
+          GoRoute(
+            path: '/search',
+            builder: (context, state) => const SearchScreen(),
+          ),
+        ],
       ),
     ],
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
-      final isAuthRoute = state.matchedLocation == '/login' ||
+      final isAuthRoute =
+          state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/forgot-password';
 
@@ -90,7 +98,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           if (state.matchedLocation == '/email-verification') return null;
           return '/email-verification';
         case AuthState.authenticated:
-          if (isAuthRoute || state.matchedLocation == '/splash' || state.matchedLocation == '/email-verification') {
+          if (isAuthRoute ||
+              state.matchedLocation == '/splash' ||
+              state.matchedLocation == '/email-verification') {
             return '/home';
           }
           return null;

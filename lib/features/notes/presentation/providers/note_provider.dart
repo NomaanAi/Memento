@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memento/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:memento/features/notes/data/repositories/note_repository.dart';
@@ -9,11 +10,14 @@ final noteRepositoryProvider = Provider<NoteRepository>((ref) {
   return NoteRepository(DatabaseHelper.instance);
 });
 
-final notesProvider = AsyncNotifierProvider<NotesNotifier, List<Note>>(NotesNotifier.new);
+final notesProvider = AsyncNotifierProvider<NotesNotifier, List<Note>>(
+  NotesNotifier.new,
+);
 
 class NotesNotifier extends AsyncNotifier<List<Note>> {
   NoteRepository get _repository => ref.read(noteRepositoryProvider);
-  String get _userId => ref.read(authStateProvider.notifier).currentUser?.uid ?? '';
+  String get _userId =>
+      ref.read(authStateProvider.notifier).currentUser?.uid ?? '';
 
   @override
   FutureOr<List<Note>> build() async {
@@ -41,4 +45,3 @@ class NotesNotifier extends AsyncNotifier<List<Note>> {
     await loadNotes();
   }
 }
-

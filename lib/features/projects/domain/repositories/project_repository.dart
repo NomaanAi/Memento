@@ -1,4 +1,4 @@
-import 'package:memento/features/projects/domain/entities/project.dart';
+﻿import 'package:memento/features/projects/domain/entities/project.dart';
 
 abstract class ProjectRepository {
   Future<List<Project>> getProjects(String userId);

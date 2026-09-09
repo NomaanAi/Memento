@@ -1,4 +1,4 @@
-import 'package:memento/features/auth/domain/entities/user_profile.dart';
+﻿import 'package:memento/features/auth/domain/entities/user_profile.dart';
 
 class UserProfileModel {
   static UserProfile fromJson(Map<String, dynamic> json) {

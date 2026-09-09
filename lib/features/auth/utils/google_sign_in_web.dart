@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 
 Future<UserCredential?> signInWithGoogleMobile(FirebaseAuth auth) async {
   // Not used on web, web uses signInWithPopup directly in the data source.

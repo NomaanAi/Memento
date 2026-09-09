@@ -23,7 +23,9 @@ class BiometricAuthService {
     }
   }
 
-  Future<bool> authenticate({String reason = 'Authenticate to access Memento'}) async {
+  Future<bool> authenticate({
+    String reason = 'Authenticate to access Memento',
+  }) async {
     try {
       final isAvailable = await isBiometricAvailable();
       if (!isAvailable) return false;

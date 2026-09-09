@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:memento/core/widgets/memento_text_field.dart';
+import 'package:memento/core/widgets/memento_button.dart';
 
 class AuthTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -24,19 +26,28 @@ class AuthTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    // If suffixIcon is an IconButton, extract the icon and onTap for MementoTextField
+    IconData? iconData;
+    VoidCallback? onTap;
+
+    if (suffixIcon is IconButton) {
+      final btn = suffixIcon as IconButton;
+      if (btn.icon is Icon) {
+        iconData = (btn.icon as Icon).icon;
+      }
+      onTap = btn.onPressed;
+    }
+
+    return MementoTextField(
       controller: controller,
+      label: label,
+      hintText: hint,
       obscureText: obscureText,
       keyboardType: keyboardType,
       validator: validator,
       onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        suffixIcon: suffixIcon,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        filled: true,
-      ),
+      suffixIcon: iconData,
+      onSuffixIconTap: onTap,
     );
   }
 }
@@ -64,17 +75,15 @@ class _PasswordFieldState extends State<PasswordField> {
 
   @override
   Widget build(BuildContext context) {
-    return AuthTextField(
+    return MementoTextField(
       controller: widget.controller,
       label: widget.label,
-      hint: 'Enter your password',
+      hintText: 'Enter your password',
       obscureText: _obscure,
       validator: widget.validator,
       onChanged: widget.onChanged,
-      suffixIcon: IconButton(
-        icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-        onPressed: () => setState(() => _obscure = !_obscure),
-      ),
+      suffixIcon: _obscure ? Icons.visibility_off : Icons.visibility,
+      onSuffixIconTap: () => setState(() => _obscure = !_obscure),
     );
   }
 }
@@ -93,22 +102,12 @@ class PrimaryAuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: FilledButton(
-        onPressed: isLoading ? null : onPressed,
-        style: FilledButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Text(text, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-      ),
+    return MementoButton(
+      label: text,
+      onPressed: onPressed,
+      isLoading: isLoading,
+      isFullWidth: true,
+      type: ButtonType.primary,
     );
   }
 }
@@ -125,23 +124,13 @@ class GoogleSignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton.icon(
-        onPressed: isLoading ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        icon: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.login), // In a real app, use a Google Logo asset
-        label: const Text('Continue with Google', style: TextStyle(fontSize: 16)),
-      ),
+    return MementoButton(
+      label: 'Continue with Google',
+      onPressed: onPressed,
+      isLoading: isLoading,
+      isFullWidth: true,
+      type: ButtonType.secondary,
+      icon: Icons.login, // Replace with google logo icon if available
     );
   }
 }
@@ -151,14 +140,29 @@ class AuthDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
-        const Expanded(child: Divider()),
+        Expanded(
+          child: Divider(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('OR', style: Theme.of(context).textTheme.bodySmall),
+          child: Text(
+            'OR',
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-        const Expanded(child: Divider()),
+        Expanded(
+          child: Divider(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+          ),
+        ),
       ],
     );
   }

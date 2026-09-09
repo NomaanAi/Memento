@@ -14,7 +14,7 @@ enum AuthState {
 
 class AuthNotifier extends Notifier<AuthState> {
   late final AuthRepository _repository;
-  
+
   AuthUser? get currentUser => _repository.currentUser;
 
   @override
@@ -25,17 +25,20 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   void _init() {
-    _repository.authStateChanges.listen((user) {
-      if (user == null) {
-        state = AuthState.unauthenticated;
-      } else if (!user.emailVerified && user.authProvider == 'password') {
-        state = AuthState.emailVerificationRequired;
-      } else {
-        state = AuthState.authenticated;
-      }
-    }, onError: (error) {
-      state = AuthState.error;
-    });
+    _repository.authStateChanges.listen(
+      (user) {
+        if (user == null) {
+          state = AuthState.unauthenticated;
+        } else if (!user.emailVerified && user.authProvider == 'password') {
+          state = AuthState.emailVerificationRequired;
+        } else {
+          state = AuthState.authenticated;
+        }
+      },
+      onError: (error) {
+        state = AuthState.error;
+      },
+    );
   }
 
   Future<void> signInWithEmail(String email, String password) async {
@@ -48,10 +51,18 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<void> signUpWithEmail(String email, String password, String displayName) async {
+  Future<void> signUpWithEmail(
+    String email,
+    String password,
+    String displayName,
+  ) async {
     try {
       state = AuthState.loading;
-      await _repository.signUpWithEmail(email: email, password: password, displayName: displayName);
+      await _repository.signUpWithEmail(
+        email: email,
+        password: password,
+        displayName: displayName,
+      );
     } catch (e) {
       state = AuthState.error;
       rethrow;
@@ -77,25 +88,25 @@ class AuthNotifier extends Notifier<AuthState> {
       rethrow;
     }
   }
-  
+
   Future<void> reloadUser() async {
-     try {
-       state = AuthState.loading;
-       await _repository.reloadUser();
-       final user = _repository.currentUser;
-       if (user != null) {
-          if (!user.emailVerified && user.authProvider == 'password') {
-            state = AuthState.emailVerificationRequired;
-          } else {
-            state = AuthState.authenticated;
-          }
-       } else {
-          state = AuthState.unauthenticated;
-       }
-     } catch(e) {
-        state = AuthState.error;
-        rethrow;
-     }
+    try {
+      state = AuthState.loading;
+      await _repository.reloadUser();
+      final user = _repository.currentUser;
+      if (user != null) {
+        if (!user.emailVerified && user.authProvider == 'password') {
+          state = AuthState.emailVerificationRequired;
+        } else {
+          state = AuthState.authenticated;
+        }
+      } else {
+        state = AuthState.unauthenticated;
+      }
+    } catch (e) {
+      state = AuthState.error;
+      rethrow;
+    }
   }
 }
 

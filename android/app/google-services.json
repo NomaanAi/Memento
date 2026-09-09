@@ -12,7 +12,20 @@
           "package_name": "com.memento.memento"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "634936246548-eajo22aooan7dmrh8ud353922t3rqrrc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.memento.memento",
+            "certificate_hash": "15eaad9d427ea7ed7768161253d1b7354b30cd10"
+          }
+        },
+        {
+          "client_id": "634936246548-vu3t01ri1qg6063os5979lislk17j9ps.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCu9N63zI6w3G6VBPq6oGc2WHvCB_3Jf4c"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "634936246548-vu3t01ri1qg6063os5979lislk17j9ps.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "634936246548-vt6lsagmr0r0pvm8r4hqnug4vfmqr1ji.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.memento.memento"
+              }
+            }
+          ]
         }
       }
     }

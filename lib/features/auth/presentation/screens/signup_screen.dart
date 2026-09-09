@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memento/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:memento/features/auth/presentation/widgets/auth_widgets.dart';
+import 'package:memento/core/widgets/memento_card.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -30,30 +31,36 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Future<void> _onSignUp() async {
     if (_formKey.currentState!.validate()) {
       try {
-        await ref.read(authStateProvider.notifier).signUpWithEmail(
+        await ref
+            .read(authStateProvider.notifier)
+            .signUpWithEmail(
               _emailController.text.trim(),
               _passwordController.text,
               _nameController.text.trim(),
             );
       } catch (e) {
         if (!mounted) return;
-        final message = e.toString().replaceFirst('AuthenticationException: ', '');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
+        final message = e.toString().replaceFirst(
+          'AuthenticationException: ',
+          '',
         );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
       }
     }
   }
-  
+
   Future<void> _onGoogleSignIn() async {
     try {
       await ref.read(authStateProvider.notifier).signInWithGoogle();
     } catch (e) {
       if (!mounted) return;
-      final message = e.toString().replaceFirst('AuthenticationException: ', '');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+      final message = e.toString().replaceFirst(
+        'AuthenticationException: ',
+        '',
       );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -61,6 +68,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final isLoading = authState == AuthState.loading;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -68,94 +76,136 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: isLoading ? null : () => context.pop(),
         ),
+        backgroundColor: Colors.transparent,
       ),
+      extendBodyBehindAppBar: true,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Create an account',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Join Memento today',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  GoogleSignInButton(
-                    onPressed: _onGoogleSignIn,
-                    isLoading: isLoading,
-                  ),
-                  const SizedBox(height: 24),
-                  const AuthDivider(),
-                  const SizedBox(height: 24),
-                  AuthTextField(
-                    controller: _nameController,
-                    label: 'Full Name',
-                    hint: 'Enter your full name',
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) return 'Name is required';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  AuthTextField(
-                    controller: _emailController,
-                    label: 'Email',
-                    hint: 'Enter your email',
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'Email is required';
-                      if (!value.contains('@')) return 'Enter a valid email';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  PasswordField(
-                    controller: _passwordController,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) return 'Password is required';
-                      if (value.length < 8) return 'Password must be at least 8 characters';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  PasswordField(
-                    controller: _confirmPasswordController,
-                    label: 'Confirm Password',
-                    validator: (value) {
-                      if (value != _passwordController.text) return 'Passwords do not match';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  PrimaryAuthButton(
-                    text: 'Create Account',
-                    onPressed: _onSignUp,
-                    isLoading: isLoading,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Already have an account?"),
-                      TextButton(
-                        onPressed: isLoading ? null : () => context.pop(),
-                        child: const Text('Sign In'),
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: MementoCard(
+              withAccent: true,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Image.asset(
+                        'assets/logo.png',
+                        width: 48,
+                        height: 48,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Create an account',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Join Memento today',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    GoogleSignInButton(
+                      onPressed: _onGoogleSignIn,
+                      isLoading: isLoading,
+                    ),
+                    const SizedBox(height: 24),
+                    const AuthDivider(),
+                    const SizedBox(height: 24),
+                    AuthTextField(
+                      controller: _nameController,
+                      label: 'Full Name',
+                      hint: 'Enter your full name',
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Name is required';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    AuthTextField(
+                      controller: _emailController,
+                      label: 'Email',
+                      hint: 'Enter your email',
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email is required';
+                        }
+                        if (!value.contains('@')) return 'Enter a valid email';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    PasswordField(
+                      controller: _passwordController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Password is required';
+                        }
+                        if (value.length < 8) {
+                          return 'Password must be at least 8 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    PasswordField(
+                      controller: _confirmPasswordController,
+                      label: 'Confirm Password',
+                      validator: (value) {
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 32),
+                    PrimaryAuthButton(
+                      text: 'Create Account',
+                      onPressed: _onSignUp,
+                      isLoading: isLoading,
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Already have an account?",
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.7,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: isLoading ? null : () => context.pop(),
+                          child: Text(
+                            'Sign In',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

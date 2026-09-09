@@ -4,9 +4,16 @@ import 'package:memento/features/auth/domain/entities/user_profile.dart';
 abstract class AuthRepository {
   Stream<AuthUser?> get authStateChanges;
   AuthUser? get currentUser;
-  
-  Future<void> signInWithEmail({required String email, required String password});
-  Future<void> signUpWithEmail({required String email, required String password, required String displayName});
+
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  });
+  Future<void> signUpWithEmail({
+    required String email,
+    required String password,
+    required String displayName,
+  });
   Future<void> signInWithGoogle();
   Future<void> signInWithApple();
   Future<void> signOut();

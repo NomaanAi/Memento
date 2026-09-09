@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memento/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:memento/features/projects/data/datasources/project_local_data_source.dart';
@@ -16,11 +17,14 @@ final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
   return ProjectRepositoryImpl(localDataSource);
 });
 
-final projectsProvider = AsyncNotifierProvider<ProjectsNotifier, List<Project>>(ProjectsNotifier.new);
+final projectsProvider = AsyncNotifierProvider<ProjectsNotifier, List<Project>>(
+  ProjectsNotifier.new,
+);
 
 class ProjectsNotifier extends AsyncNotifier<List<Project>> {
   ProjectRepository get _repository => ref.read(projectRepositoryProvider);
-  String get _userId => ref.read(authStateProvider.notifier).currentUser?.uid ?? '';
+  String get _userId =>
+      ref.read(authStateProvider.notifier).currentUser?.uid ?? '';
 
   @override
   FutureOr<List<Project>> build() async {
@@ -48,4 +52,3 @@ class ProjectsNotifier extends AsyncNotifier<List<Project>> {
     await loadProjects();
   }
 }
-

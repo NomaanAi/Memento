@@ -31,11 +31,19 @@ class ProjectLocalDataSourceImpl implements ProjectLocalDataSource {
         description: maps[i]['description'] as String?,
         category: maps[i]['category'] as String?,
         priority: maps[i]['priority'] as String?,
-        startDate: maps[i]['startDate'] != null ? DateTime.fromMillisecondsSinceEpoch(maps[i]['startDate'] as int) : null,
-        deadline: maps[i]['deadline'] != null ? DateTime.fromMillisecondsSinceEpoch(maps[i]['deadline'] as int) : null,
+        startDate: maps[i]['startDate'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(maps[i]['startDate'] as int)
+            : null,
+        deadline: maps[i]['deadline'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(maps[i]['deadline'] as int)
+            : null,
         progress: (maps[i]['progress'] as num?)?.toDouble() ?? 0.0,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['createdAt'] as int),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['updatedAt'] as int),
+        createdAt: DateTime.fromMillisecondsSinceEpoch(
+          maps[i]['createdAt'] as int,
+        ),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(
+          maps[i]['updatedAt'] as int,
+        ),
         userId: maps[i]['userId'] as String,
       );
     });
@@ -59,8 +67,12 @@ class ProjectLocalDataSourceImpl implements ProjectLocalDataSource {
       description: map['description'] as String?,
       category: map['category'] as String?,
       priority: map['priority'] as String?,
-      startDate: map['startDate'] != null ? DateTime.fromMillisecondsSinceEpoch(map['startDate'] as int) : null,
-      deadline: map['deadline'] != null ? DateTime.fromMillisecondsSinceEpoch(map['deadline'] as int) : null,
+      startDate: map['startDate'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['startDate'] as int)
+          : null,
+      deadline: map['deadline'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['deadline'] as int)
+          : null,
       progress: (map['progress'] as num?)?.toDouble() ?? 0.0,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int),
@@ -71,22 +83,19 @@ class ProjectLocalDataSourceImpl implements ProjectLocalDataSource {
   @override
   Future<void> createProject(Project project) async {
     final db = await _dbHelper.database;
-    await db.insert(
-      'projects',
-      {
-        'id': project.id,
-        'name': project.name,
-        'description': project.description,
-        'category': project.category,
-        'priority': project.priority,
-        'startDate': project.startDate?.millisecondsSinceEpoch,
-        'deadline': project.deadline?.millisecondsSinceEpoch,
-        'progress': project.progress,
-        'createdAt': project.createdAt.millisecondsSinceEpoch,
-        'updatedAt': project.updatedAt.millisecondsSinceEpoch,
-        'userId': project.userId,
-      },
-    );
+    await db.insert('projects', {
+      'id': project.id,
+      'name': project.name,
+      'description': project.description,
+      'category': project.category,
+      'priority': project.priority,
+      'startDate': project.startDate?.millisecondsSinceEpoch,
+      'deadline': project.deadline?.millisecondsSinceEpoch,
+      'progress': project.progress,
+      'createdAt': project.createdAt.millisecondsSinceEpoch,
+      'updatedAt': project.updatedAt.millisecondsSinceEpoch,
+      'userId': project.userId,
+    });
   }
 
   @override
@@ -112,10 +121,6 @@ class ProjectLocalDataSourceImpl implements ProjectLocalDataSource {
   @override
   Future<void> deleteProject(String id) async {
     final db = await _dbHelper.database;
-    await db.delete(
-      'projects',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('projects', where: 'id = ?', whereArgs: [id]);
   }
 }

@@ -17,7 +17,10 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthUser? get currentUser => _remoteDataSource.currentUser;
 
   @override
-  Future<void> signInWithEmail({required String email, required String password}) async {
+  Future<void> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
     await _remoteDataSource.signInWithEmail(email: email, password: password);
     final user = _remoteDataSource.currentUser;
     if (user != null) {
@@ -26,8 +29,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> signUpWithEmail({required String email, required String password, required String displayName}) async {
-    await _remoteDataSource.signUpWithEmail(email: email, password: password, displayName: displayName);
+  Future<void> signUpWithEmail({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
+    await _remoteDataSource.signUpWithEmail(
+      email: email,
+      password: password,
+      displayName: displayName,
+    );
     final user = _remoteDataSource.currentUser;
     if (user != null) {
       await _syncProfile(user.uid);

@@ -1,11 +1,11 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: 'https://api.memento.example.com', // Placeholder URL
+      baseUrl: 'https://dummyjson.com',
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
       headers: {
@@ -26,8 +26,6 @@ final dioProvider = Provider<Dio>((ref) {
       logPrint: (obj) => Logger().d(obj),
     ),
   );
-
-  // TODO: Add AuthInterceptor
 
   return dio;
 });

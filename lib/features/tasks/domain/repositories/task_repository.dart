@@ -1,4 +1,4 @@
-import 'package:memento/features/tasks/domain/entities/task.dart';
+﻿import 'package:memento/features/tasks/domain/entities/task.dart';
 
 abstract class TaskRepository {
   Future<List<AppTask>> getTasks(String userId);

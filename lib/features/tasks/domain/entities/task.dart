@@ -18,5 +18,6 @@ abstract class AppTask with _$AppTask {
     required String userId,
   }) = _AppTask;
 
-  factory AppTask.fromJson(Map<String, dynamic> json) => _$AppTaskFromJson(json);
+  factory AppTask.fromJson(Map<String, dynamic> json) =>
+      _$AppTaskFromJson(json);
 }

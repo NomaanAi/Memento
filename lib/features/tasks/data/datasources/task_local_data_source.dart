@@ -33,9 +33,15 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
         description: maps[i]['description'] as String?,
         priority: maps[i]['priority'] as String?,
         status: maps[i]['status'] as String?,
-        dueDate: maps[i]['dueDate'] != null ? DateTime.fromMillisecondsSinceEpoch(maps[i]['dueDate'] as int) : null,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['createdAt'] as int),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['updatedAt'] as int),
+        dueDate: maps[i]['dueDate'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(maps[i]['dueDate'] as int)
+            : null,
+        createdAt: DateTime.fromMillisecondsSinceEpoch(
+          maps[i]['createdAt'] as int,
+        ),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(
+          maps[i]['updatedAt'] as int,
+        ),
         userId: maps[i]['userId'] as String,
       );
     });
@@ -59,9 +65,15 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
         description: maps[i]['description'] as String?,
         priority: maps[i]['priority'] as String?,
         status: maps[i]['status'] as String?,
-        dueDate: maps[i]['dueDate'] != null ? DateTime.fromMillisecondsSinceEpoch(maps[i]['dueDate'] as int) : null,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['createdAt'] as int),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(maps[i]['updatedAt'] as int),
+        dueDate: maps[i]['dueDate'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(maps[i]['dueDate'] as int)
+            : null,
+        createdAt: DateTime.fromMillisecondsSinceEpoch(
+          maps[i]['createdAt'] as int,
+        ),
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(
+          maps[i]['updatedAt'] as int,
+        ),
         userId: maps[i]['userId'] as String,
       );
     });
@@ -86,7 +98,9 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
       description: map['description'] as String?,
       priority: map['priority'] as String?,
       status: map['status'] as String?,
-      dueDate: map['dueDate'] != null ? DateTime.fromMillisecondsSinceEpoch(map['dueDate'] as int) : null,
+      dueDate: map['dueDate'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['dueDate'] as int)
+          : null,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int),
       userId: map['userId'] as String,
@@ -96,21 +110,18 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
   @override
   Future<void> createTask(AppTask task) async {
     final db = await _dbHelper.database;
-    await db.insert(
-      'tasks',
-      {
-        'id': task.id,
-        'projectId': task.projectId,
-        'title': task.title,
-        'description': task.description,
-        'priority': task.priority,
-        'status': task.status,
-        'dueDate': task.dueDate?.millisecondsSinceEpoch,
-        'createdAt': task.createdAt.millisecondsSinceEpoch,
-        'updatedAt': task.updatedAt.millisecondsSinceEpoch,
-        'userId': task.userId,
-      },
-    );
+    await db.insert('tasks', {
+      'id': task.id,
+      'projectId': task.projectId,
+      'title': task.title,
+      'description': task.description,
+      'priority': task.priority,
+      'status': task.status,
+      'dueDate': task.dueDate?.millisecondsSinceEpoch,
+      'createdAt': task.createdAt.millisecondsSinceEpoch,
+      'updatedAt': task.updatedAt.millisecondsSinceEpoch,
+      'userId': task.userId,
+    });
   }
 
   @override
@@ -135,10 +146,6 @@ class TaskLocalDataSourceImpl implements TaskLocalDataSource {
   @override
   Future<void> deleteTask(String id) async {
     final db = await _dbHelper.database;
-    await db.delete(
-      'tasks',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
   }
 }

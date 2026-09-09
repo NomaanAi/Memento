@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memento/features/auth/presentation/providers/auth_state_provider.dart';
 import 'package:memento/features/tasks/data/datasources/task_local_data_source.dart';
@@ -16,11 +17,14 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepositoryImpl(localDataSource);
 });
 
-final tasksProvider = AsyncNotifierProvider<TasksNotifier, List<AppTask>>(TasksNotifier.new);
+final tasksProvider = AsyncNotifierProvider<TasksNotifier, List<AppTask>>(
+  TasksNotifier.new,
+);
 
 class TasksNotifier extends AsyncNotifier<List<AppTask>> {
   TaskRepository get _repository => ref.read(taskRepositoryProvider);
-  String get _userId => ref.read(authStateProvider.notifier).currentUser?.uid ?? '';
+  String get _userId =>
+      ref.read(authStateProvider.notifier).currentUser?.uid ?? '';
 
   @override
   FutureOr<List<AppTask>> build() async {
