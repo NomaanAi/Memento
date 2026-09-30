@@ -7,6 +7,7 @@ import 'package:memento/features/auth/presentation/providers/auth_state_provider
 import 'package:memento/core/widgets/memento_card.dart';
 import 'package:memento/core/widgets/memento_state_views.dart';
 import 'package:memento/core/theme/app_spacing.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 class ProjectsScreen extends ConsumerWidget {
@@ -44,7 +45,7 @@ class ProjectsScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.l),
             itemCount: projects.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.m),
+            separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.m),
             itemBuilder: (context, index) {
               final project = projects[index];
               return _ProjectCard(project: project);
@@ -130,7 +131,7 @@ class _ProjectCard extends ConsumerWidget {
     return MementoCard(
       withAccent: true,
       onTap: () {
-        // In the future: navigate to project details
+        context.go('/projects/${project.id}');
       },
       padding: const EdgeInsets.all(AppSpacing.l),
       child: Column(
@@ -150,8 +151,10 @@ class _ProjectCard extends ConsumerWidget {
               PopupMenuButton<String>(
                 icon: Icon(Icons.more_horiz, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
                 onSelected: (value) {
-                  if (value == 'delete') {
-                    ref.read(projectsProvider.notifier).deleteProject(project.id);
+                  if (value == 'edit') {
+                    _showEditProjectDialog(context, ref, project);
+                  } else if (value == 'delete') {
+                    _showDeleteConfirmationDialog(context, ref, project);
                   }
                 },
                 itemBuilder: (context) => [
@@ -194,7 +197,7 @@ class _ProjectCard extends ConsumerWidget {
                 ),
               ),
               const Spacer(),
-              if (project.progress != null && project.progress! > 0)
+              if (project.progress > 0)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: 4),
                   decoration: BoxDecoration(
@@ -202,7 +205,7 @@ class _ProjectCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(AppRadii.s),
                   ),
                   child: Text(
-                    '${(project.progress! * 100).toInt()}%',
+                    '${(project.progress * 100).toInt()}%',
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -210,6 +213,103 @@ class _ProjectCard extends ConsumerWidget {
                   ),
                 ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProjectDialog(BuildContext context, WidgetRef ref, Project project) {
+    final nameController = TextEditingController(text: project.name);
+    final descController = TextEditingController(text: project.description);
+    double progress = project.progress;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Edit Workspace'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: 'Workspace Name'),
+                  ),
+                  const SizedBox(height: AppSpacing.m),
+                  TextField(
+                    controller: descController,
+                    decoration: const InputDecoration(labelText: 'Description (Optional)'),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: AppSpacing.m),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Progress:'),
+                      Text('${(progress * 100).toInt()}%'),
+                    ],
+                  ),
+                  Slider(
+                    value: progress,
+                    onChanged: (value) {
+                      setState(() {
+                        progress = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (nameController.text.trim().isEmpty) return;
+                    final updatedProject = project.copyWith(
+                      name: nameController.text.trim(),
+                      description: descController.text.trim(),
+                      progress: progress,
+                      updatedAt: DateTime.now(),
+                    );
+                    ref.read(projectsProvider.notifier).updateProject(updatedProject);
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, WidgetRef ref, Project project) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Workspace?'),
+        content: Text('Are you sure you want to delete "${project.name}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              ref.read(projectsProvider.notifier).deleteProject(project.id);
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Workspace deleted')),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            child: const Text('Delete'),
           ),
         ],
       ),

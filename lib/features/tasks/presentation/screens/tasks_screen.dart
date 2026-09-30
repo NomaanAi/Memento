@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memento/features/tasks/domain/entities/task.dart';
 import 'package:memento/features/tasks/presentation/providers/task_provider.dart';
-import 'package:uuid/uuid.dart';
-import 'package:memento/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:memento/core/widgets/memento_card.dart';
 import 'package:memento/core/widgets/memento_state_views.dart';
 import 'package:memento/core/theme/app_spacing.dart';
@@ -35,7 +34,7 @@ class TasksScreen extends ConsumerWidget {
               description: 'Capture something you need to get done.',
               icon: Icons.check_circle_outline,
               action: ElevatedButton.icon(
-                onPressed: () => _showCreateTaskDialog(context, ref),
+                onPressed: () => context.push('/tasks/create'),
                 icon: const Icon(Icons.add),
                 label: const Text('New Task'),
               ),
@@ -99,7 +98,7 @@ class TasksScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateTaskDialog(context, ref),
+        onPressed: () => context.push('/tasks/create'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         child: const Icon(Icons.add),
@@ -107,55 +106,7 @@ class TasksScreen extends ConsumerWidget {
     );
   }
 
-  void _showCreateTaskDialog(BuildContext context, WidgetRef ref) {
-    final titleController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('New Task'),
-          content: TextField(
-            controller: titleController,
-            decoration: const InputDecoration(labelText: 'Task title', hintText: 'e.g. Buy groceries'),
-            autofocus: true,
-            onSubmitted: (_) {
-               _createTask(titleController.text, ref, ctx);
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => _createTask(titleController.text, ref, ctx),
-              child: const Text('Create'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  
-  void _createTask(String title, WidgetRef ref, BuildContext ctx) {
-    if (title.trim().isEmpty) return;
-                
-    final user = ref.read(authStateProvider.notifier).currentUser;
-    if (user != null) {
-      final newTask = AppTask(
-        id: const Uuid().v4(),
-        title: title.trim(),
-        status: 'pending',
-        priority: 'Medium',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        userId: user.uid,
-      );
-      ref.read(tasksProvider.notifier).addTask(newTask);
-    }
-    Navigator.pop(ctx);
-  }
 }
 
 class _TaskCard extends ConsumerWidget {
@@ -170,6 +121,9 @@ class _TaskCard extends ConsumerWidget {
 
     return MementoCard(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s, vertical: AppSpacing.s),
+      onTap: () {
+        context.push('/tasks/${task.id}');
+      },
       child: Row(
         children: [
           IconButton(
@@ -234,11 +188,19 @@ class _TaskCard extends ConsumerWidget {
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
             onSelected: (value) {
-              if (value == 'delete') {
+              if (value == 'edit') {
+                context.push('/tasks/${task.id}/edit', extra: task);
+              } else if (value == 'delete') {
                 ref.read(tasksProvider.notifier).deleteTask(task.id);
               }
             },
             itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [Icon(Icons.edit_outlined, size: 20), SizedBox(width: 8), Text('Edit')],
+                ),
+              ),
               const PopupMenuItem(
                 value: 'delete',
                 child: Row(

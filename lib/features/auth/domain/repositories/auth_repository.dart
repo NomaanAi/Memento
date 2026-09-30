@@ -15,10 +15,11 @@ abstract class AuthRepository {
     required String displayName,
   });
   Future<void> signInWithGoogle();
-  Future<void> signInWithApple();
+
   Future<void> signOut();
   Future<void> sendPasswordResetEmail(String email);
   Future<void> sendEmailVerification();
   Future<void> reloadUser();
   Future<UserProfile?> getUserProfile(String uid);
+  Future<void> updateProfile(String displayName);
 }

@@ -9,9 +9,17 @@ import 'package:memento/features/auth/presentation/screens/forgot_password_scree
 import 'package:memento/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:memento/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:memento/features/projects/presentation/screens/projects_screen.dart';
+import 'package:memento/features/projects/presentation/screens/project_details_screen.dart';
 import 'package:memento/features/tasks/presentation/screens/tasks_screen.dart';
+import 'package:memento/features/tasks/presentation/screens/task_details_screen.dart';
+import 'package:memento/features/tasks/presentation/screens/create_edit_task_screen.dart';
+import 'package:memento/features/tasks/domain/entities/task.dart';
 import 'package:memento/features/notes/presentation/screens/notes_screen.dart';
+import 'package:memento/features/notes/presentation/screens/note_details_screen.dart';
+import 'package:memento/features/notes/presentation/screens/note_editor_screen.dart';
+import 'package:memento/features/notes/domain/entities/note.dart';
 import 'package:memento/features/search/presentation/screens/search_screen.dart';
+import 'package:memento/features/profile/presentation/screens/profile_screen.dart';
 
 import '../layout/responsive_shell.dart';
 
@@ -61,18 +69,73 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/projects',
             builder: (context, state) => const ProjectsScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return ProjectDetailsScreen(projectId: id);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/tasks',
             builder: (context, state) => const TasksScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                builder: (context, state) => const CreateEditTaskScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return TaskDetailsScreen(taskId: id);
+                },
+              ),
+              GoRoute(
+                path: ':id/edit',
+                builder: (context, state) {
+                  final id = state.pathParameters['id'];
+                  final task = state.extra as AppTask?;
+                  return CreateEditTaskScreen(task: task, taskId: id);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/notes',
             builder: (context, state) => const NotesScreen(),
+            routes: [
+              GoRoute(
+                path: 'create',
+                builder: (context, state) => const NoteEditorScreen(),
+              ),
+              GoRoute(
+                path: ':id',
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return NoteDetailsScreen(noteId: id);
+                },
+              ),
+              GoRoute(
+                path: ':id/edit',
+                builder: (context, state) {
+                  final id = state.pathParameters['id'];
+                  final note = state.extra as Note?;
+                  return NoteEditorScreen(note: note, noteId: id);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/search',
             builder: (context, state) => const SearchScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (context, state) => const ProfileScreen(),
           ),
         ],
       ),

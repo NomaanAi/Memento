@@ -6,7 +6,7 @@ import 'package:memento/features/auth/domain/entities/user_profile.dart';
 import 'package:memento/features/auth/data/models/user_profile_model.dart';
 import 'package:memento/features/auth/utils/google_sign_in_helper.dart';
 import 'package:memento/core/errors/app_exceptions.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
 
 abstract class AuthRemoteDataSource {
   Stream<AuthUser?> get authStateChanges;
@@ -21,12 +21,13 @@ abstract class AuthRemoteDataSource {
     required String displayName,
   });
   Future<void> signInWithGoogle();
-  Future<void> signInWithApple();
+
   Future<void> signOut();
   Future<void> sendPasswordResetEmail(String email);
   Future<void> sendEmailVerification();
   Future<void> reloadUser();
   Future<UserProfile?> getUserProfile(String uid);
+  Future<void> updateProfile(String displayName);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -227,66 +228,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
-  @override
-  Future<void> signInWithApple() async {
-    try {
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
 
-      final OAuthProvider oAuthProvider = OAuthProvider('apple.com');
-      final AuthCredential credential = oAuthProvider.credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
-
-      final userCredential = await _firebaseAuth.signInWithCredential(
-        credential,
-      );
-      final user = userCredential.user;
-
-      if (user != null) {
-        final userDoc = await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        if (!userDoc.exists) {
-          final displayName =
-              appleCredential.givenName != null ||
-                  appleCredential.familyName != null
-              ? '${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}'
-                    .trim()
-              : user.displayName;
-
-          final profile = UserProfile(
-            uid: user.uid,
-            displayName: displayName,
-            email: user.email ?? appleCredential.email,
-            photoUrl: user.photoURL,
-            authProvider: 'apple.com',
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
-          await _firestore
-              .collection('users')
-              .doc(user.uid)
-              .set(UserProfileModel.toJson(profile));
-        }
-      }
-    } on FirebaseAuthException catch (e) {
-      throw AuthenticationException(
-        _mapFirebaseError(e.code, e.message),
-        code: e.code,
-      );
-    } catch (e) {
-      throw AuthenticationException(
-        'An unexpected error occurred during Apple Sign-In.',
-      );
-    }
-  }
 
   @override
   Future<void> signOut() async {
@@ -362,6 +304,25 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return null;
     } catch (e) {
       throw DatabaseException('Failed to get user profile', details: e);
+    }
+  }
+
+  @override
+  Future<void> updateProfile(String displayName) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        throw AuthenticationException('No user logged in.');
+      }
+      
+      await user.updateDisplayName(displayName);
+      
+      await _firestore.collection('users').doc(user.uid).update({
+        'displayName': displayName,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      throw AuthenticationException('Failed to update profile: $e');
     }
   }
 }

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memento/features/notes/domain/entities/note.dart';
 import 'package:memento/features/notes/presentation/providers/note_provider.dart';
-import 'package:uuid/uuid.dart';
-import 'package:memento/features/auth/presentation/providers/auth_state_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:memento/core/widgets/memento_card.dart';
 import 'package:memento/core/widgets/memento_state_views.dart';
 import 'package:memento/core/theme/app_spacing.dart';
@@ -35,7 +34,7 @@ class NotesScreen extends ConsumerWidget {
               description: 'Capture your first idea or note.',
               icon: Icons.lightbulb_outline,
               action: ElevatedButton.icon(
-                onPressed: () => _showCreateNoteDialog(context, ref),
+                onPressed: () => context.push('/notes/create'),
                 icon: const Icon(Icons.add),
                 label: const Text('New Note'),
               ),
@@ -95,7 +94,7 @@ class NotesScreen extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateNoteDialog(context, ref),
+        onPressed: () => context.push('/notes/create'),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
         child: const Icon(Icons.edit),
@@ -124,63 +123,7 @@ class NotesScreen extends ConsumerWidget {
     );
   }
 
-  void _showCreateNoteDialog(BuildContext context, WidgetRef ref) {
-    final titleController = TextEditingController();
-    final contentController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('New Note'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title', hintText: 'e.g. Meeting Notes'),
-                autofocus: true,
-              ),
-              const SizedBox(height: AppSpacing.m),
-              TextField(
-                controller: contentController,
-                decoration: const InputDecoration(labelText: 'Content', hintText: 'Start typing...'),
-                maxLines: 5,
-                keyboardType: TextInputType.multiline,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (titleController.text.trim().isEmpty || contentController.text.trim().isEmpty) return;
-                
-                final user = ref.read(authStateProvider.notifier).currentUser;
-                if (user != null) {
-                  final newNote = Note(
-                    id: const Uuid().v4(),
-                    title: titleController.text.trim(),
-                    content: contentController.text.trim(),
-                    pinned: false,
-                    createdAt: DateTime.now(),
-                    updatedAt: DateTime.now(),
-                    userId: user.uid,
-                  );
-                  ref.read(notesProvider.notifier).addNote(newNote);
-                }
-                Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }
 
 class _NoteCard extends ConsumerWidget {
@@ -195,7 +138,7 @@ class _NoteCard extends ConsumerWidget {
     return MementoCard(
       padding: const EdgeInsets.all(AppSpacing.m),
       onTap: () {
-        // Show edit dialog or detail screen
+        context.push('/notes/${note.id}');
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -89,6 +89,17 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  Future<void> updateProfile(String displayName) async {
+    try {
+      state = AuthState.loading;
+      await _repository.updateProfile(displayName);
+      await reloadUser();
+    } catch (e) {
+      state = AuthState.error;
+      rethrow;
+    }
+  }
+
   Future<void> reloadUser() async {
     try {
       state = AuthState.loading;

@@ -55,15 +55,6 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> signInWithApple() async {
-    await _remoteDataSource.signInWithApple();
-    final user = _remoteDataSource.currentUser;
-    if (user != null) {
-      await _syncProfile(user.uid);
-    }
-  }
-
-  @override
   Future<void> signOut() async {
     await _remoteDataSource.signOut();
     await _localDataSource.clearUserProfile();
@@ -96,6 +87,15 @@ class AuthRepositoryImpl implements AuthRepository {
       // If network fails, try local
     }
     return _localDataSource.getUserProfile(uid);
+  }
+
+  @override
+  Future<void> updateProfile(String displayName) async {
+    await _remoteDataSource.updateProfile(displayName);
+    final user = _remoteDataSource.currentUser;
+    if (user != null) {
+      await _syncProfile(user.uid);
+    }
   }
 
   Future<void> _syncProfile(String uid) async {

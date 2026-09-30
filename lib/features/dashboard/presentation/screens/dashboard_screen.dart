@@ -94,12 +94,16 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ],
         ),
-        CircleAvatar(
-          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-          radius: 24,
-          child: Icon(
-            Icons.person_outline_rounded,
-            color: theme.colorScheme.primary,
+        InkWell(
+          onTap: () => context.push('/profile'),
+          borderRadius: BorderRadius.circular(24),
+          child: CircleAvatar(
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+            radius: 24,
+            child: Icon(
+              Icons.person_outline_rounded,
+              color: theme.colorScheme.primary,
+            ),
           ),
         ),
       ],
@@ -193,7 +197,7 @@ class DashboardScreen extends ConsumerWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: pendingTasks.length > 3 ? 3 : pendingTasks.length,
-          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.s),
+          separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s),
           itemBuilder: (context, index) {
             final task = pendingTasks[index];
             return MementoCard(
@@ -266,7 +270,7 @@ class DashboardScreen extends ConsumerWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: projects.length > 3 ? 3 : projects.length,
-          separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.s),
+          separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.s),
           itemBuilder: (context, index) {
             final project = projects[index];
             return MementoCard(
